@@ -158,12 +158,6 @@ void GGreg20V3Component::update_instant_count() {
     return;
   }
 
-  uint32_t current_pulses;
-  {
-    InterruptLock lock;
-    current_pulse_count = this->pulse_count_; // Fixed to match member variable
-  }
-
   uint32_t active_pulses;
   {
     InterruptLock lock;
