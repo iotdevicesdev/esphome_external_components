@@ -8,7 +8,6 @@
 namespace esphome {
 namespace ggreg20_v3 {
 
-// Sensor classes used by Python codegen
 class DosePowerSensor : public sensor::Sensor {};
 class EquivDoseSensor : public sensor::Sensor {};
 class TotalDoseSensor : public sensor::Sensor {};
