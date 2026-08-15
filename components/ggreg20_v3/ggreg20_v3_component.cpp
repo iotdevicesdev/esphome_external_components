@@ -158,17 +158,17 @@ void GGreg20V3Component::update_instant_count() {
     return;
   }
 
-  uint32_t active_pulses;
+  uint32_t current_pulses;
   {
     InterruptLock lock;
-    active_pulses = this->pulse_count_;
+    current_pulses = this->pulse_count_;
   }
 
   if (this->count_sensor_ != nullptr) {
-    this->count_sensor_->publish_state(static_cast<float>(active_pulses));
+    this->count_sensor_->publish_state(static_cast<float>(current_pulses));
   }
 
-  ESP_LOGV(TAG, "Instant pulse count: %" PRIu32, active_pulses);
+  ESP_LOGV(TAG, "Instant pulse count: %" PRIu32, current_pulses);
 }
 
 }  // namespace ggreg20_v3
