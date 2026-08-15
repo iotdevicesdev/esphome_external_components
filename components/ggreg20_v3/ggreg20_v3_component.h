@@ -74,5 +74,3 @@ class GGreg20V3Component : public Component {
 
 }  // namespace ggreg20_v3
 }  // namespace esphome
-
-
