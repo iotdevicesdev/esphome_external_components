@@ -1,6 +1,7 @@
 #include "ggreg20_v3_component.h"
 #include "esphome/core/helpers.h"
 #include "esphome/core/log.h"
+#include <inttypes.h>
 #include <string>
 
 static const char *const TAG = "ggreg20_v3";
@@ -39,8 +40,11 @@ void GGreg20V3Component::setup() {
 
   this->last_update_time_ms_ = millis();
 
+  char pin_summary[64];
+  this->pin_->dump_summary(pin_summary, sizeof(pin_summary));
+
   ESP_LOGCONFIG(TAG, "GGreg20_V3 Sensor setup complete. Pin: %s, Logic: %s", 
-                this->pin_->dump_summary().c_str(),
+                pin_summary,
                 this->int_logic_ == 0 ? "Active-Low" : "Active-High");
 }
 
@@ -155,7 +159,7 @@ void GGreg20V3Component::publish_data(uint32_t pulses) {
     this->status_sensor_->publish_state(status);
   }
 
-  ESP_LOGD(TAG, "Pulses: %u, CPM: %.2f, Power: %.4f uSv/h, Equiv: %.4f uSv/h, Total: %.4f uSv, Status: %s",
+  ESP_LOGD(TAG, "Pulses: %" PRIu32 ", CPM: %.2f, Power: %.4f uSv/h, Equiv: %.4f uSv/h, Total: %.4f uSv, Status: %s",
            pulses, cpm, dose_power, equiv_dose, this->total_accumulated_dose_, status.c_str());
 }
 
@@ -176,10 +180,8 @@ void GGreg20V3Component::update_instant_count() {
     this->count_sensor_->publish_state(static_cast<float>(current_pulses));
   }
 
-  ESP_LOGV(TAG, "Instant pulse count: %u", current_pulses);
+  ESP_LOGV(TAG, "Instant pulse count: %" PRIu32, current_pulses);
 }
 
 }  // namespace ggreg20_v3
 }  // namespace esphome
-
-
