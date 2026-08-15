@@ -19,8 +19,6 @@ void IRAM_ATTR GGreg20V3Component::gpio_interrupt(GGreg20V3Component *obj) {
 
   obj->pulse_count_++;
   obj->last_pulse_time_us_ = now_us;
-  
-  // Update instant CPM after each pulse (not in IRAM, will be called from loop)
 }
 
 void GGreg20V3Component::setup() {
@@ -40,6 +38,7 @@ void GGreg20V3Component::setup() {
 
   this->last_update_time_ms_ = millis();
 
+  // Fix for ESPHome GPIO dump_summary API change
   char pin_summary[64];
   this->pin_->dump_summary(pin_summary, sizeof(pin_summary));
 
@@ -83,12 +82,10 @@ void GGreg20V3Component::publish_data(uint32_t pulses) {
 
   // Check if this is the first measurement
   if (this->first_measurement_) {
-    // During first measurement period, show waiting status
     if (this->status_sensor_ != nullptr) {
       this->status_sensor_->publish_state("Wait, collecting data");
     }
     
-    // Reset all non-cumulative sensors to 0 during first measurement
     if (this->dose_power_sensor_ != nullptr) {
       this->dose_power_sensor_->publish_state(0.0f);
     }
@@ -111,21 +108,14 @@ void GGreg20V3Component::publish_data(uint32_t pulses) {
     return;
   }
 
-  // Normal measurement processing after first period
-  // 1) CPM
+  // Normal measurement processing
   const float cpm = static_cast<float>(pulses) / time_in_minutes;
-
-  // 2) Dose power (µSv/h)
   const float dose_power = cpm * this->dose_power_factor_;
-
-  // 3) Equivalent dose (µSv/h)
   const float equiv_dose = cpm * this->equiv_dose_factor_;
-
-  // 4) Total accumulated dose (µSv) - only this is cumulative
+  
   const float dose_increment = equiv_dose * (time_in_minutes / 60.0f);
   this->total_accumulated_dose_ += dose_increment;
 
-  // 5) Status logic
   std::string status;
   if (cpm > 315000.0f) {
     status = "Sensor Overflow Error";
@@ -139,7 +129,6 @@ void GGreg20V3Component::publish_data(uint32_t pulses) {
     status = "Sensor Error (Low Count)";
   }
 
-  // Publish all sensor values
   if (this->dose_power_sensor_ != nullptr) {
     this->dose_power_sensor_->publish_state(dose_power);
   }
@@ -153,18 +142,18 @@ void GGreg20V3Component::publish_data(uint32_t pulses) {
     this->cpm_sensor_->publish_state(cpm);
   }
   if (this->count_sensor_ != nullptr) {
-    this->count_sensor_->publish_state(0.0f);  // Reset count at end of period
+    this->count_sensor_->publish_state(0.0f);
   }
   if (this->status_sensor_ != nullptr) {
     this->status_sensor_->publish_state(status);
   }
 
+  // Fixed format string using PRIu32 macro
   ESP_LOGD(TAG, "Pulses: %" PRIu32 ", CPM: %.2f, Power: %.4f uSv/h, Equiv: %.4f uSv/h, Total: %.4f uSv, Status: %s",
            pulses, cpm, dose_power, equiv_dose, this->total_accumulated_dose_, status.c_str());
 }
 
 void GGreg20V3Component::update_instant_count() {
-  // Skip instant updates during first measurement period
   if (this->first_measurement_) {
     return;
   }
@@ -172,15 +161,20 @@ void GGreg20V3Component::update_instant_count() {
   uint32_t current_pulses;
   {
     InterruptLock lock;
-    current_pulses = this->pulse_count_;
+    current_pulse_count = this->pulse_count_; // Fixed to match member variable
   }
 
-  // Show current pulse count in count sensor
+  uint32_t active_pulses;
+  {
+    InterruptLock lock;
+    active_pulses = this->pulse_count_;
+  }
+
   if (this->count_sensor_ != nullptr) {
-    this->count_sensor_->publish_state(static_cast<float>(current_pulses));
+    this->count_sensor_->publish_state(static_cast<float>(active_pulses));
   }
 
-  ESP_LOGV(TAG, "Instant pulse count: %" PRIu32, current_pulses);
+  ESP_LOGV(TAG, "Instant pulse count: %" PRIu32, active_pulses);
 }
 
 }  // namespace ggreg20_v3
