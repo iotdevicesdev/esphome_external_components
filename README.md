@@ -145,6 +145,9 @@ ggreg20_v3:
 
 
 ### Git external component config
+
+> Please note that ESPHome keeps the cloned repository under /config/esphome/.esphome/external_components/ and reuses it regardless of "clean build files", which only clears the PlatformIO build directory. Setting `refresh: 0s` forces a fresh clone; deleting that folder by hand does the same. See more on [*refresh* option](https://esphome.io/components/external_components/#refresh).
+
 #### YAML for GitHub setup
 ```yaml
 esphome:
@@ -155,7 +158,8 @@ external_components:
       type: git
       url: https://github.com/iotdevicesdev/esphome_external_components 
       ref: main 
-    components: [ggreg20_v3] 
+    components: [ggreg20_v3]
+    #refresh: 0s 
 
 ggreg20_v3:
   id: ggreg
