@@ -4,6 +4,11 @@ This is an **external ESPHome component** for the DIY Geiger Counter Module **GG
 
 The component simplifies the integration of the GGreg20\_V3 module with any ESP-based device running ESPHome. It moves complex logic—including pulse counting, dead time filtering, dose calculation, and status determination—from YAML into reliable C++.
 
+> Please note that this component needs its own GPIO and cannot coexist with `pulse_counter` on the same pin. You usually don't need to know this, since the `pulse_counter` component and the external `ggreg20_v3` component are alternatives to each other—unless you're trying to include both in your ESPHome YAML file at the same time and compile it for your own purposes, such as testing. ESPHome's 'pulse_counter' claims the pin for the ESP32 PCNT peripheral, after which the GPIO interrupt of external `ggreg20_v3` component no longer fires.
+
+> ESPHome also rejects `allow_other_uses: true` once a pin is used only once. Please note this as well.
+
+ 
 ---
 <img width="1105" height="359" alt="image" src="https://github.com/user-attachments/assets/0668fc14-00b6-4000-8b41-ed88c4dfc68e" />
 
